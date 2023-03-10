@@ -6,15 +6,7 @@ const varPrefix = 'agg';
 const prefixRegExpr = new RegExp(varPrefix, 'g');
 
 function hasFormulas(cols: any[]) {
-  // let found: boolean = false;
-  // cols.forEach((col) => {
-  //   if (aggTypeFormulaId === col.meta?.sourceParams?.type) {
-  //     found = true;
-  //     return;
-  //   }
-  // });
   return find(cols, 'aggConfig.type.name', aggTypeFormulaId) !== undefined;
-  // return found;
 }
 
 function extractSeriesAndFormulas(rows, cols) {
