@@ -1,0 +1,14 @@
+{
+  "id": "datasweetFormula",
+  "version": "2.2.2",
+  "kibanaVersion": "7.17.9",
+  "owner": {
+    "name": "gnehcnij.w@qq.com",
+    "githubTeam": "gnehcnij"
+  },
+  "description": "This Kibana plugin allows calculated metrics on any standard kibana visualizations.",
+  "server": false,
+  "ui": true,
+  "requiredPlugins": ["data", "expressions"],
+  "optionalPlugins": []
+}
