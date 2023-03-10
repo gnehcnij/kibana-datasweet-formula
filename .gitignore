@@ -13,6 +13,7 @@ pids
 
 # Compiled binary addons
 build/
+target
 releases/
 site/
 bin/

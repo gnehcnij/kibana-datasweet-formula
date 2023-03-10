@@ -10,6 +10,9 @@ import { datasweetFormula } from './agg_types/datasweet_formula_fn';
 import { ExpressionsPublicPlugin } from '../../../src/plugins/expressions/public';
 import { TabbedAggResponseWriter } from '../../../src/plugins/data/common';
 
+import { applyFormula } from './decorators/lib/apply_formula';
+import { applyHiddenCols } from './decorators/lib/apply_hidden_cols';
+
 export interface DatasweetFormulaPluginSetupDependencies {
   data: ReturnType<DataPublicPlugin['setup']>;
   expressions: ReturnType<ExpressionsPublicPlugin['setup']>;
@@ -29,11 +32,10 @@ export class DatasweetFormulaPlugin implements Plugin<void, DatasweetFormulaPlug
     TabbedAggResponseWriter.prototype.response = function () {
       // @ts-ignore
       // eslint-disable-next-line prefer-rest-params
-      const decoratedResponseFn = responseFn.apply(this, arguments);
-      console.log('装饰一下开始');
-      console.log(this.columns);
-      console.log('装饰一下结束');
-      return decoratedResponseFn;
+      const decoratedResponse = responseFn.apply(this, arguments);
+      applyFormula(this.columns, decoratedResponse);
+      applyHiddenCols(this.columns, decoratedResponse);
+      return decoratedResponse;
     };
   }
 
