@@ -52,7 +52,7 @@ export const getDatasweetFormulaMetricAgg = () => {
       console.log('=======================================================================');
       console.log(JSON.stringify(bucket));
       console.log('=======================================================================');
-      return 10000;
+      return null;
     },
   });
 };
