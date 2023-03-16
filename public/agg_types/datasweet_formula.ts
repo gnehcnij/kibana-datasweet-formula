@@ -15,6 +15,7 @@ export const datasweetFormulaType = 'Calculated Metrics';
 export interface AggParamsDatasweetFormula extends BaseAggParams {
   formula: string;
   formatter: string;
+  numeralFormat: string;
   hidden: boolean;
 }
 
@@ -44,7 +45,13 @@ export const getDatasweetFormulaMetricAgg = () => {
       {
         name: 'formatter',
         type: 'string',
-        displayName: 'Formatter input',
+        displayName: 'Formatter input, one of [Number(default), Percent, Boolean, Bytes, Numeral]',
+      },
+      {
+        name: 'numeralFormat',
+        type: 'string',
+        displayName: 'Numeral.js format',
+        required: false,
       },
     ] as Array<MetricAggParam<IMetricAggConfig>>,
     getValue(agg, bucket) {

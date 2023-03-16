@@ -1,33 +1,55 @@
-import { each, find, get, isArray, isEmpty, map } from 'lodash';
+import { each, find, get, isArray, isEmpty, map, lowerCase, includes } from 'lodash';
 import { formulaParser } from './formula_parser';
+// @ts-ignore
+import { FieldFormatsRegistry } from '../../../../../src/plugins/field_formats/common';
+// @ts-ignore
+import { TabbedAggColumn } from '../../../../../src/plugins/data/common/search/tabify/types';
+import { Datatable, DatatableRow } from '../../../../../src/plugins/expressions';
 
 const aggTypeFormulaId = 'datasweet_formula';
 const varPrefix = 'agg';
 const prefixRegExpr = new RegExp(varPrefix, 'g');
 
+const formatters = ['number', 'percent', 'boolean', 'bytes', 'numeral'];
+
+export interface Formula {
+  colId: string;
+  key: string;
+  compiled: any;
+  formatter?: string;
+  numeralFormat?: string;
+}
+
+export interface SeriesAndFormula {
+  series: any;
+  formulas: Formula[];
+}
+
 function hasFormulas(cols: any[]) {
+  // @ts-ignore
   return find(cols, 'aggConfig.type.name', aggTypeFormulaId) !== undefined;
 }
 
-function extractSeriesAndFormulas(rows, cols) {
-  const res = { series: {}, formulas:[] };
+function extractSeriesAndFormulas(rows: DatatableRow[], cols: TabbedAggColumn[]) {
+  const res: SeriesAndFormula = { series: {}, formulas: [] };
 
-  each(cols, (c) => {
+  each(cols, (c: TabbedAggColumn) => {
     const colId = c.id;
-    const columnGroupPrefix = c.columnGroup != null ? `colGroup${c.columnGroup}_` : '';
-    const key = columnGroupPrefix + varPrefix + c.aggConfig.id.replace('.', '_');
+    const key = varPrefix + c.aggConfig.id.replace('.', '_');
 
     // formula ?
     if (c.aggConfig.type.name === aggTypeFormulaId) {
       const f = get(c.aggConfig.params, 'formula', '')
         .trim()
         // Adds columnGroup to prefix
-        .replace(prefixRegExpr, columnGroupPrefix + varPrefix);
+        .replace(prefixRegExpr, varPrefix);
       if (f.length > 0) {
         res.formulas.push({
           colId,
           key,
           compiled: f.length > 0 ? formulaParser.parse(f) : null,
+          formatter: get(c.aggConfig.params, 'formatter', '').trim(),
+          numeralFormat: get(c.aggConfig.params, 'numeralFormat', '').trim(),
         });
       }
       res.series[key] = null;
@@ -43,13 +65,30 @@ function extractSeriesAndFormulas(rows, cols) {
   return res;
 }
 
-function compute(datas) {
+function compute(datas: SeriesAndFormula, fieldFormats: FieldFormatsRegistry) {
   const computed = {};
   each(datas.formulas, (f) => {
     let res = null;
+    let tmp = null;
     try {
       res = f.compiled.evaluate(datas.series);
-      computed[f.colId] = { value: res, isArray: isArray(res) };
+      if (res) {
+        let formatter = lowerCase(f.formatter) || 'number';
+        let params = {};
+        if (f.numeralFormat && formatter === 'numeral') {
+          params = { pattern: f.numeralFormat };
+        }
+        if (formatter === 'numeral' || !includes(formatters, formatter)) {
+          formatter = 'number';
+        }
+        const fieldFormat = fieldFormats.getInstance(formatter, params);
+        if (fieldFormat) {
+          // @ts-ignore
+          tmp = map(res, (r) => fieldFormat.textConvert(r));
+        }
+      }
+      // @ts-ignore
+      computed[f.colId] = { value: tmp, isArray: isArray(tmp) };
     } catch (e) {
       res = null;
       // console.log('ERROR', e);
@@ -59,27 +98,28 @@ function compute(datas) {
   return computed;
 }
 
-function mutate(table, columns) {
-  if (table.tables) {
-    table.tables.forEach((t) => mutate(t, columns));
-  } else {
-    const datas = extractSeriesAndFormulas(table.rows, columns);
+function mutate(table: Datatable, columns: TabbedAggColumn[], fieldFormats: FieldFormatsRegistry) {
+  const datas = extractSeriesAndFormulas(table.rows, columns);
 
-    // Compute and stocks
-    const computed = compute(datas);
+  // Compute and stocks
+  const computed = compute(datas, fieldFormats);
 
-    // Apply
-    if (!isEmpty(computed)) {
-      each(table.rows, (row, i) => {
-        each(computed, (data, colId) => {
-          row[colId] = data.isArray ? data.value[i] || null : data.value;
-        });
+  // Apply
+  if (!isEmpty(computed)) {
+    each(table.rows, (row, i) => {
+      each(computed, (data, colId) => {
+        // @ts-ignore
+        row[colId] = data.isArray ? data.value[i] || null : data.value;
       });
-    }
+    });
   }
 }
 
-export function applyFormula(columns, resp) {
-  if (columns.length === 0 || resp.length === 0 || !hasFormulas(columns)) return;
-  mutate(resp, columns);
+export function applyFormula(
+  columns: TabbedAggColumn[],
+  resp: Datatable,
+  fieldFormats: FieldFormatsRegistry
+) {
+  if (columns.length === 0 || !hasFormulas(columns)) return;
+  mutate(resp, columns, fieldFormats);
 }

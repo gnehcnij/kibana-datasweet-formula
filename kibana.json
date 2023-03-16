@@ -9,6 +9,6 @@
   "description": "This Kibana plugin allows calculated metrics on any standard kibana visualizations.",
   "server": false,
   "ui": true,
-  "requiredPlugins": ["data", "expressions"],
+  "requiredPlugins": ["data", "expressions", "fieldFormats"],
   "optionalPlugins": []
 }

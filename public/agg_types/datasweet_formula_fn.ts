@@ -53,14 +53,20 @@ export const datasweetFormula = (): FunctionDefinition => ({
     },
     formula: {
       types: ['string'],
-      help: i18n.translate('data.search.aggs.metrics.datasweetFormula.json.help', {
+      help: i18n.translate('data.search.aggs.metrics.datasweetFormula.formula.help', {
         defaultMessage: 'Formula string to calculate agg value',
       }),
     },
     formatter: {
       types: ['string'],
-      help: i18n.translate('data.search.aggs.metrics.datasweetFormula.json.help', {
+      help: i18n.translate('data.search.aggs.metrics.datasweetFormula.formatter.help', {
         defaultMessage: 'Formatter to format the result of formula agg',
+      }),
+    },
+    numeralFormat: {
+      types: ['string'],
+      help: i18n.translate('data.search.aggs.metrics.datasweetFormula.numeralFormat.help', {
+        defaultMessage: 'NumeralFormat for formatter to format the result of formula agg',
       }),
     },
     hidden: {
