@@ -9,7 +9,6 @@ import { datasweetFormula } from './agg_types/datasweet_formula_fn';
 // @ts-ignore
 import { ExpressionsPublicPlugin } from '../../../src/plugins/expressions/public';
 import { decorateTabbedAggResponseWriter } from './decorators/response_writer';
-import { decorateAggConfig } from './decorators/agg_config';
 
 export interface DatasweetFormulaPluginSetupDependencies {
   data: ReturnType<DataPublicPlugin['setup']>;
@@ -27,7 +26,6 @@ export class DatasweetFormulaPlugin implements Plugin<void, DatasweetFormulaPlug
     data.search.aggs.types.registerMetric('datasweet_formula', getDatasweetFormulaMetricAgg);
     expressions.registerFunction(datasweetFormula);
     decorateTabbedAggResponseWriter();
-    decorateAggConfig();
   }
 
   public start(core: CoreStart) {
