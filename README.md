@@ -13,10 +13,7 @@ We are Datasweet, a french startup providing full service (big) data solutions. 
 
 # Installation
 This plugin is supported by :
- - Kibana 7.0.x => v2.2.0
- - Kibana 6.5.x to 6.7.x => v2.1.0
- - Kibana 6.4.x => v2.0.0
- - Kibana 5.6.x to 6.3.x => v1.1.3
+ - Kibana 7.17.9 => v2.2.2
 
 
 Copy the last installation url for your version of Kibana from the [repository releases](https://github.com/datasweet/kibana-datasweet-formula/releases/latest).
@@ -32,21 +29,15 @@ Check out what it can do in the [documentation.](http://www.datasweet.fr/dataswe
 See the [kibana contributing guide](https://github.com/elastic/kibana/blob/master/CONTRIBUTING.md) for instructions setting up your development environment. Once you have completed that, use the following yarn scripts.
 
     > ***IMPORTANT:*** You must have the following tree :
-      - kibana/
-      - kibana-extra/
+      - kibana/plugins
           - kibana-datasweet-formula/
 
   ```bash
   cd kibana
-  git checkout v7.x
-  rm -Rf node_modules/
+  git checkout v7.17.9
   nvm use
   yarn kbn bootstrap
-  docker run -p 9200:9200 docker.elastic.co/elasticsearch/elasticsearch:7.x
-  node scripts/makelogs.js
-  cd ../kibana-extra/kibana-datasweet-formula/
-  rm -Rf node_modules/
-  yarn kbn bootstrap
+  docker run -p 9200:9200 docker.elastic.co/elasticsearch/elasticsearch:7.17.9
   yarn start
   ```
 
