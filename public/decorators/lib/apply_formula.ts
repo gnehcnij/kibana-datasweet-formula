@@ -1,7 +1,7 @@
 import { each, find, get, isArray, isEmpty, map, lowerCase, includes } from 'lodash';
 import { formulaParser } from './formula_parser';
 // @ts-ignore
-import { FieldFormatsRegistry } from '../../../../../src/plugins/field_formats/common';
+import { FieldFormat, FieldFormatsRegistry} from '../../../../../src/plugins/field_formats/common';
 // @ts-ignore
 import { TabbedAggColumn } from '../../../../../src/plugins/data/common/search/tabify/types';
 import { Datatable, DatatableRow } from '../../../../../src/plugins/expressions';
@@ -69,7 +69,7 @@ function compute(datas: SeriesAndFormula, fieldFormats: FieldFormatsRegistry) {
   const computed = {};
   each(datas.formulas, (f) => {
     let res = null;
-    let tmp = null;
+    let fieldFormat = null;
     try {
       res = f.compiled.evaluate(datas.series);
       if (res) {
@@ -81,14 +81,10 @@ function compute(datas: SeriesAndFormula, fieldFormats: FieldFormatsRegistry) {
         if (formatter === 'numeral' || !includes(formatters, formatter)) {
           formatter = 'number';
         }
-        const fieldFormat = fieldFormats.getInstance(formatter, params);
-        if (fieldFormat) {
-          // @ts-ignore
-          tmp = map(res, (r) => fieldFormat.textConvert(r));
-        }
+        fieldFormat = fieldFormats.getInstance(formatter, params);
       }
       // @ts-ignore
-      computed[f.colId] = { value: tmp, isArray: isArray(tmp) };
+      computed[f.colId] = { value: res, isArray: isArray(res), fieldFormat: fieldFormat };
     } catch (e) {
       res = null;
       // console.log('ERROR', e);
@@ -109,7 +105,9 @@ function mutate(table: Datatable, columns: TabbedAggColumn[], fieldFormats: Fiel
     each(table.rows, (row, i) => {
       each(computed, (data, colId) => {
         // @ts-ignore
-        row[colId] = data.isArray ? data.value[i] || null : data.value;
+        let r = data.isArray ? data.value[i] || null : data.value;
+        // @ts-ignore
+        row[colId] = r === null ? null : data.fieldFormat?.textConvert(r);
       });
     });
   }
