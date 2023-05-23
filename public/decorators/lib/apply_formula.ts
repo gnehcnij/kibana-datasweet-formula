@@ -84,7 +84,7 @@ function compute(datas: SeriesAndFormula, fieldFormats: FieldFormatsRegistry) {
         fieldFormat = fieldFormats.getInstance(formatter, params);
       }
       // @ts-ignore
-      computed[f.colId] = { value: res, isArray: isArray(res), fieldFormat: fieldFormat };
+      computed[f.colId] = { value: res, isArray: isArray(res), fieldFormat: fieldFormat, formatter: formatter};
     } catch (e) {
       res = null;
       // console.log('ERROR', e);
@@ -107,7 +107,7 @@ function mutate(table: Datatable, columns: TabbedAggColumn[], fieldFormats: Fiel
         // @ts-ignore
         let r = data.isArray ? data.value[i] || null : data.value;
         // @ts-ignore
-        row[colId] = r === null ? null : data.fieldFormat?.textConvert(r);
+        row[colId] = r === null ? null : (data.formatter === 'number' ? parseFloat(r) : data.fieldFormat?.textConvert(r));
       });
     });
   }
