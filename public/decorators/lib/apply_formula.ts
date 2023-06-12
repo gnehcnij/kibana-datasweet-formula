@@ -1,4 +1,4 @@
-import { each, find, get, isArray, isEmpty, map, lowerCase, includes } from 'lodash';
+import { each, find, get, isArray, isEmpty, map } from 'lodash';
 import { formulaParser } from './formula_parser';
 // @ts-ignore
 import { FieldFormat, FieldFormatsRegistry} from '../../../../../src/plugins/field_formats/common';
@@ -10,14 +10,10 @@ const aggTypeFormulaId = 'datasweet_formula';
 const varPrefix = 'agg';
 const prefixRegExpr = new RegExp(varPrefix, 'g');
 
-const formatters = ['number', 'percent', 'boolean', 'bytes', 'numeral'];
-
 export interface Formula {
   colId: string;
   key: string;
   compiled: any;
-  formatter?: string;
-  numeralFormat?: string;
 }
 
 export interface SeriesAndFormula {
@@ -48,8 +44,6 @@ function extractSeriesAndFormulas(rows: DatatableRow[], cols: TabbedAggColumn[])
           colId,
           key,
           compiled: f.length > 0 ? formulaParser.parse(f) : null,
-          formatter: get(c.aggConfig.params, 'formatter', '').trim(),
-          numeralFormat: get(c.aggConfig.params, 'numeralFormat', '').trim(),
         });
       }
       res.series[key] = null;
@@ -65,26 +59,14 @@ function extractSeriesAndFormulas(rows: DatatableRow[], cols: TabbedAggColumn[])
   return res;
 }
 
-function compute(datas: SeriesAndFormula, fieldFormats: FieldFormatsRegistry) {
+function compute(datas: SeriesAndFormula) {
   const computed = {};
   each(datas.formulas, (f) => {
     let res = null;
-    let fieldFormat = null;
     try {
       res = f.compiled.evaluate(datas.series);
-      let formatter = lowerCase(f.formatter) || 'number';
-      if (res !== null && res !== undefined) {
-        let params = {};
-        if (f.numeralFormat && formatter === 'numeral') {
-          params = { pattern: f.numeralFormat };
-        }
-        if (formatter === 'numeral' || !includes(formatters, formatter)) {
-          formatter = 'number';
-        }
-        fieldFormat = fieldFormats.getInstance(formatter, params);
-      }
       // @ts-ignore
-      computed[f.colId] = { value: res, isArray: isArray(res), fieldFormat: fieldFormat, formatter: formatter};
+      computed[f.colId] = { value: res, isArray: isArray(res) };
     } catch (e) {
       res = null;
       // console.log('ERROR', e);
@@ -94,21 +76,18 @@ function compute(datas: SeriesAndFormula, fieldFormats: FieldFormatsRegistry) {
   return computed;
 }
 
-function mutate(table: Datatable, columns: TabbedAggColumn[], fieldFormats: FieldFormatsRegistry) {
+function mutate(table: Datatable, columns: TabbedAggColumn[]) {
   const datas = extractSeriesAndFormulas(table.rows, columns);
 
   // Compute and stocks
-  const computed = compute(datas, fieldFormats);
+  const computed = compute(datas);
 
   // Apply
   if (!isEmpty(computed)) {
     each(table.rows, (row, i) => {
       each(computed, (data, colId) => {
         // @ts-ignore
-        let r = data.isArray ? data.value[i] : data.value;
-        // @ts-ignore
-        // row[colId] = r === null ? null : (data.formatter === 'number' ? parseFloat(r) : data.fieldFormat?.textConvert(r));
-        row[colId] = r === null ? null : data.fieldFormat?.textConvert(r);
+        row[colId] = data.isArray ? data.value[i] : data.value;
       });
     });
   }
@@ -116,9 +95,8 @@ function mutate(table: Datatable, columns: TabbedAggColumn[], fieldFormats: Fiel
 
 export function applyFormula(
   columns: TabbedAggColumn[],
-  resp: Datatable,
-  fieldFormats: FieldFormatsRegistry
+  resp: Datatable
 ) {
   if (columns.length === 0 || !hasFormulas(columns)) return;
-  mutate(resp, columns, fieldFormats);
+  mutate(resp, columns);
 }

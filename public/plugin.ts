@@ -9,13 +9,10 @@ import { datasweetFormula } from './agg_types/datasweet_formula_fn';
 // @ts-ignore
 import { ExpressionsPublicPlugin } from '../../../src/plugins/expressions/public';
 import { decorateTabbedAggResponseWriter } from './decorators/response_writer';
-// @ts-ignore
-import { FieldFormatsPlugin } from '../../../src/plugins/field_formats/public/plugin';
 
 export interface DatasweetFormulaPluginSetupDependencies {
   data: ReturnType<DataPublicPlugin['setup']>;
   expressions: ReturnType<ExpressionsPublicPlugin['setup']>;
-  fieldFormats: ReturnType<FieldFormatsPlugin['setup']>;
 }
 
 export class DatasweetFormulaPlugin implements Plugin<void, DatasweetFormulaPluginStart> {
@@ -27,12 +24,12 @@ export class DatasweetFormulaPlugin implements Plugin<void, DatasweetFormulaPlug
 
   public setup(
     core: CoreSetup,
-    { data, expressions, fieldFormats }: DatasweetFormulaPluginSetupDependencies
+    { data, expressions }: DatasweetFormulaPluginSetupDependencies
   ) {
     data.search.aggs.types.registerMetric('datasweet_formula', getDatasweetFormulaMetricAgg);
     expressions.registerFunction(datasweetFormula);
     // @ts-ignore
-    decorateTabbedAggResponseWriter(fieldFormats);
+    decorateTabbedAggResponseWriter();
   }
 
   public start(core: CoreStart) {
