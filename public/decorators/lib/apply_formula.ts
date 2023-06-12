@@ -72,8 +72,8 @@ function compute(datas: SeriesAndFormula, fieldFormats: FieldFormatsRegistry) {
     let fieldFormat = null;
     try {
       res = f.compiled.evaluate(datas.series);
-      if (res) {
-        let formatter = lowerCase(f.formatter) || 'number';
+      let formatter = lowerCase(f.formatter) || 'number';
+      if (res !== null && res !== undefined) {
         let params = {};
         if (f.numeralFormat && formatter === 'numeral') {
           params = { pattern: f.numeralFormat };
@@ -105,9 +105,10 @@ function mutate(table: Datatable, columns: TabbedAggColumn[], fieldFormats: Fiel
     each(table.rows, (row, i) => {
       each(computed, (data, colId) => {
         // @ts-ignore
-        let r = data.isArray ? data.value[i] || null : data.value;
+        let r = data.isArray ? data.value[i] : data.value;
         // @ts-ignore
-        row[colId] = r === null ? null : (data.formatter === 'number' ? parseFloat(r) : data.fieldFormat?.textConvert(r));
+        // row[colId] = r === null ? null : (data.formatter === 'number' ? parseFloat(r) : data.fieldFormat?.textConvert(r));
+        row[colId] = r === null ? null : data.fieldFormat?.textConvert(r);
       });
     });
   }
